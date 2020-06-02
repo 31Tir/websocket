@@ -4,6 +4,9 @@ import json
 
 
 class EchoConsumer(WebsocketConsumer):
+    """
+        Get data text and send it to client
+    """
     def connect(self):
         self.accept()
 
@@ -17,6 +20,10 @@ class EchoConsumer(WebsocketConsumer):
 
         
 class ChatConsumer(AsyncWebsocketConsumer):
+    """
+        for connect create group and add user to this
+        and for disconnect delete that group
+    """
     async def connect(self):
         self.user_id = self.scope['url_route']['kwargs']['username']
         self.group_name = f"chat_{self.user_id}"
@@ -34,6 +41,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data=None, bytes_data=None):
+        """
+            Get and send message to user group name
+        """
         if text_data:
             text_data_json = json.loads(text_data)
             username = text_data_json['receiver']
