@@ -1,5 +1,7 @@
 from django.shortcuts import render, HttpResponse
 from django.utils.safestring import mark_safe
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import json
 
 def index(request):
@@ -12,4 +14,28 @@ def echo_image(request):
 def join_chat(request, username):
     # import pdb; pdb.set_trace()
     return render(request, 'echo/join_chat.html', {'username_json':mark_safe(json.dumps(username))})
+
+def api_message(request, username):
+    receiver = request.GET['receiver']
+    text = request.GET['text']
+    channel_layer = get_channel_layer()
+    group_name = f'chat_{receiver}'
+
+    async_to_sync(channel_layer.group_send)(
+        group_name,
+        {
+            'type': 'chat_message',
+            'message': json.dumps({'sender':username, 'receiver':receiver, 'text':text})  
+        }
+    )
+
+    async_to_sync(channel_layer.group_send)(
+        'echo_1',
+        {
+            'type': 'echo_message',
+            'message': json.dumps({'sender':username, 'receiver':receiver, 'text':text})  
+        }
+    )
+
+    return HttpResponse("Message sent")
 
